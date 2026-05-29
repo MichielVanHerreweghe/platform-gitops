@@ -12,21 +12,23 @@ metadata:
 data:
   # ArgoCD is not exposed externally; it is reached via:
   #   kubectl port-forward svc/argocd-server -n argocd 8080:443
-  # The Auth0 Application must allow https://localhost:8080/auth/callback.
+  # The Entra app registration must allow https://localhost:8080/auth/callback
+  # as a Web redirect URI.
   url: https://localhost:8080
-  # clientID/clientSecret are resolved from the `argocd-auth0` secret created by
+  # clientID/clientSecret are resolved from the `argocd-azure` secret created by
   # the ExternalSecret in this directory. The issuer must be a literal: ArgoCD
   # only substitutes $secret refs for clientID/clientSecret, not the issuer.
-  # TODO: replace YOUR_TENANT with your Auth0 tenant domain (keep trailing slash).
+  # TODO: replace TENANT_ID with your Entra (Azure AD) Directory (tenant) ID.
+  # Authorization is driven by Entra "App roles": assign users/groups to roles
+  # on the app's Enterprise Application, and ArgoCD reads the `roles` claim
+  # (see argocd-rbac-cm.yaml). No requestedIDTokenClaims block is needed --
+  # assigned app roles are emitted in the ID token automatically.
   oidc.config: |
-    name: Auth0
-    issuer: https://platformmvh.eu.auth0.com/
-    clientID: $argocd-auth0:clientID
-    clientSecret: $argocd-auth0:clientSecret
+    name: Azure
+    issuer: https://login.microsoftonline.com/TENANT_ID/v2.0
+    clientID: $argocd-azure:clientID
+    clientSecret: $argocd-azure:clientSecret
     requestedScopes:
       - openid
       - profile
       - email
-    requestedIDTokenClaims:
-      groups:
-        essential: true
