@@ -22,19 +22,26 @@ spec:
   workloadOverride:
     replicas: 1
 ---
-# Exposes the Kubernetes API server (default/kubernetes ClusterIP) through the
-# routing peer to the k8s-admins group. Must live in the same namespace as the
-# Service it references (serviceRef is namespace-local).
-apiVersion: netbird.io/v1alpha1
-kind: NetworkResource
+# Exposes the kube-vip HA API VIP (a real host IP, not a ClusterIP) through the
+# routing peer. We target the VIP instead of the kubernetes Service ClusterIP
+# because Cilium runs as kube-proxy replacement with socket-LB, which only DNATs
+# ClusterIPs for locally-originated sockets -- traffic *forwarded* through the
+# routing peer is never translated, so a ClusterIP resource is unreachable.
+# NBResource also creates the access policy inline (policySourceGroups).
+# networkID is the NetBird-generated network created by the NetworkRouter above.
+apiVersion: netbird.io/v1
+kind: NBResource
 metadata:
   name: kubernetes-api
-  namespace: default
+  namespace: netbird
 spec:
-  networkRouterRef:
-    name: cluster
-    namespace: netbird
-  serviceRef:
-    name: kubernetes
+  name: kubernetes-api
+  networkID: d8cn89ifadhs73bs47sg
+  address: 10.0.0.33/32
+  tcpPorts:
+    - 6443
   groups:
-    - name: k8s-admins
+    - k8s-admins
+  policyName: k8s-api-access
+  policySourceGroups:
+    - k8s-admins
