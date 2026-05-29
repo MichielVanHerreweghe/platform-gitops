@@ -15,7 +15,7 @@ spec:
     - chart: external-secrets
       repoURL: "https://charts.external-secrets.io"
       targetRevision: 2.5.0
-    - repoURL: "https://github.com/VoyagerDigital/platform-gitops.git"
+    - repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
       path: src/core/external-secrets/manifests
       targetRevision: HEAD
   syncPolicy:
