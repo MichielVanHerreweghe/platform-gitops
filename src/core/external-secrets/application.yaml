@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-secrets
+  namespace: argocd
+  labels:
+    app: external-secrets
+    project: core
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-secrets
+  project: core
+  sources:
+    - chart: external-secrets
+      repoURL: "https://charts.external-secrets.io"
+      targetRevision: 2.5.0
+    - repoURL: "https://github.com/VoyagerDigital/platform-gitops.git"
+      path: src/core/external-secrets/manifests
+      targetRevision: HEAD
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+      - CreateNamespace=true
+      - PruneLast=true
