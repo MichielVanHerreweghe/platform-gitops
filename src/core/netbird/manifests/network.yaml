@@ -1,0 +1,40 @@
+# NetBird group that is allowed to reach the exposed cluster resources.
+# Assign your PC's peer to this group in the NetBird dashboard.
+apiVersion: netbird.io/v1alpha1
+kind: Group
+metadata:
+  name: k8s-admins
+  namespace: netbird
+spec:
+  name: k8s-admins
+---
+# Routing peer(s) deployed in-cluster that join the NetBird mesh and route
+# traffic to the exposed resources. HA via workloadOverride.replicas.
+# NOTE: the DNS zone referenced here must be pre-created in the NetBird dashboard.
+apiVersion: netbird.io/v1alpha1
+kind: NetworkRouter
+metadata:
+  name: cluster
+  namespace: netbird
+spec:
+  dnsZoneRef:
+    name: k8s.internal
+  workloadOverride:
+    replicas: 1
+---
+# Exposes the Kubernetes API server (default/kubernetes ClusterIP) through the
+# routing peer to the k8s-admins group. Must live in the same namespace as the
+# Service it references (serviceRef is namespace-local).
+apiVersion: netbird.io/v1alpha1
+kind: NetworkResource
+metadata:
+  name: kubernetes-api
+  namespace: default
+spec:
+  networkRouterRef:
+    name: cluster
+    namespace: netbird
+  serviceRef:
+    name: kubernetes
+  groups:
+    - name: k8s-admins

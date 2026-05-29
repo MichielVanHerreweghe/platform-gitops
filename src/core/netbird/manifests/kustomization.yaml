@@ -3,3 +3,4 @@ kind: Kustomization
 
 resources:
   - netbird-api-secret.yaml
+  - network.yaml
