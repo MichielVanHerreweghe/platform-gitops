@@ -14,11 +14,13 @@ data:
   #   kubectl port-forward svc/argocd-server -n argocd 8080:443
   # The Auth0 Application must allow https://localhost:8080/auth/callback.
   url: https://localhost:8080
-  # All sensitive values are resolved from the `argocd-auth0` secret created by
-  # the ExternalSecret in this directory.
+  # clientID/clientSecret are resolved from the `argocd-auth0` secret created by
+  # the ExternalSecret in this directory. The issuer must be a literal: ArgoCD
+  # only substitutes $secret refs for clientID/clientSecret, not the issuer.
+  # TODO: replace YOUR_TENANT with your Auth0 tenant domain (keep trailing slash).
   oidc.config: |
     name: Auth0
-    issuer: $argocd-auth0:issuer
+    issuer: https://platformmvh.eu.auth0.com
     clientID: $argocd-auth0:clientID
     clientSecret: $argocd-auth0:clientSecret
     requestedScopes:
