@@ -20,9 +20,6 @@ spec:
     - repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
       targetRevision: HEAD
       ref: values
-    - repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
-      path: src/core/cert-manager/manifests
-      targetRevision: HEAD
   syncPolicy:
     automated:
       allowEmpty: true
