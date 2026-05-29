@@ -1,0 +1,18 @@
+# Merged (Server-Side Apply) into the install-managed argocd-rbac-cm ConfigMap.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-rbac-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Everyone who can authenticate gets read-only access unless a group grants more.
+  policy.default: role:readonly
+  # Tells ArgoCD which OIDC token claim(s) to use for RBAC subject/group matching.
+  scopes: '[groups]'
+  policy.csv: |
+    # Map Auth0 groups (from the 'groups' claim, injected by an Auth0 Action)
+    # to ArgoCD roles. Adjust the group names to match your Auth0 setup.
+    g, argocd-admins, role:admin

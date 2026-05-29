@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  labels:
+    app: argocd
+    project: core
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  project: core
+  source:
+    repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
+    path: src/core/argocd/manifests
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+      # ServerSideApply lets us merge only the keys we declare into the
+      # install-managed argocd-cm / argocd-rbac-cm ConfigMaps instead of
+      # taking full ownership of them.
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+      - CreateNamespace=true
+      - PruneLast=true

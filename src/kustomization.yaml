@@ -6,3 +6,4 @@ resources:
   - core/external-secrets/application.yaml
   - core/cert-manager/application.yaml
   - core/netbird/application.yaml
+  - core/argocd/application.yaml

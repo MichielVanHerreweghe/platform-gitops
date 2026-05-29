@@ -1,0 +1,30 @@
+# Merged (Server-Side Apply) into the install-managed argocd-cm ConfigMap.
+# Only the keys declared here are owned by ArgoCD; all other existing keys are
+# left untouched.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # ArgoCD is not exposed externally; it is reached via:
+  #   kubectl port-forward svc/argocd-server -n argocd 8080:443
+  # The Auth0 Application must allow https://localhost:8080/auth/callback.
+  url: https://localhost:8080
+  # All sensitive values are resolved from the `argocd-auth0` secret created by
+  # the ExternalSecret in this directory.
+  oidc.config: |
+    name: Auth0
+    issuer: $argocd-auth0:issuer
+    clientID: $argocd-auth0:clientID
+    clientSecret: $argocd-auth0:clientSecret
+    requestedScopes:
+      - openid
+      - profile
+      - email
+    requestedIDTokenClaims:
+      groups:
+        essential: true
