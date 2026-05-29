@@ -4,4 +4,5 @@ kind: Kustomization
 resources:
   - core/project.yaml
   - core/external-secrets/application.yaml
+  - core/cert-manager/application.yaml
   - core/netbird/application.yaml
