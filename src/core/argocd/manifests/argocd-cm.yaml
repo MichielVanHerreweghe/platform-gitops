@@ -25,7 +25,7 @@ data:
   # assigned app roles are emitted in the ID token automatically.
   oidc.config: |
     name: Azure
-    issuer: https://login.microsoftonline.com/TENANT_ID/v2.0
+    issuer: https://login.microsoftonline.com/5897482a-f0cc-4b2a-acea-6df9a4fe00b5/v2.0
     clientID: $argocd-azure:clientID
     clientSecret: $argocd-azure:clientSecret
     requestedScopes:
