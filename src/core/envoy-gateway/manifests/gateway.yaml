@@ -18,7 +18,20 @@ metadata:
   namespace: envoy-gateway-system
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Tell external-dns to publish the VPS public IP(s) for every hostname served
+    # here, instead of the private Cilium LB IP it would otherwise read from the
+    # Gateway address. Keep this in sync with spec.addresses below. Once you have
+    # confirmed the IP also shows up in `kubectl get gateway eg -n
+    # envoy-gateway-system -o jsonpath='{.status.addresses}'`, this annotation
+    # can be dropped (the gateway source reads status.addresses automatically).
+    external-dns.alpha.kubernetes.io/target: "144.91.118.205"
 spec:
+  # The VPS public IP(s). Envoy Gateway surfaces these as the Envoy Service's
+  # externalIPs (requires the Service to be LoadBalancer/NodePort, see
+  # envoyproxy.yaml), so Cilium DNATs <public IP>:443 to the local Envoy pod.
+  addresses:
+    - type: IPAddress
+      value: 144.91.118.205
   gatewayClassName: envoy-gateway
   listeners:
     - name: https-codeforging

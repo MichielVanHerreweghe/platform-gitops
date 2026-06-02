@@ -1,0 +1,46 @@
+# external-dns reconciles DNS records in Cloudflare from cluster resources.
+# https://kubernetes-sigs.github.io/external-dns/
+provider:
+  name: cloudflare
+
+# Cloudflare API token (Zone:DNS:Edit + Zone:Zone:Read on the managed zones).
+# Pulled from Infisical into the cloudflare-api-token Secret by the
+# ExternalSecret in this app's manifests/ directory.
+env:
+  - name: CF_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: cloudflare-api-token
+        key: api-token
+
+# Watch Gateway API HTTPRoutes (the cluster's traffic entrypoint via Envoy
+# Gateway) plus Services. external-dns derives record names from HTTPRoute
+# hostnames and the Gateway's resolved address.
+sources:
+  - gateway-httproute
+  - service
+
+# Only manage records inside zones we own; never touch anything else.
+domainFilters:
+  - codeforging.nl
+
+# sync = create, update AND delete records (full lifecycle management).
+# Records are tagged with a TXT registry entry owned by this id so external-dns
+# only ever mutates records it created.
+policy: sync
+registry: txt
+txtOwnerId: codeforging
+# Prefix the ownership TXT records so they never collide with the managed
+# record's name (a TXT and CNAME at the same name cannot coexist; the
+# gateway-httproute source emits CNAMEs when the gateway address is a hostname).
+txtPrefix: "_extdns-."
+
+# Records stay DNS-only (gray cloud): TLS is terminated at the Envoy Gateway
+# with Let's Encrypt certs, so we do not want Cloudflare's proxy in front.
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 64Mi
+  limits:
+    memory: 128Mi

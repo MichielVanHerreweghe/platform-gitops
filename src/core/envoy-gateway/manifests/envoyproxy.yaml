@@ -10,17 +10,11 @@ spec:
   provider:
     type: Kubernetes
     kubernetes:
-      envoyDeployment:
-        # Run the data plane highly available.
-        replicas: 2
-        pod:
-          topologySpreadConstraints:
-            - maxSkew: 1
-              topologyKey: kubernetes.io/hostname
-              whenUnsatisfiable: ScheduleAnyway
-              labelSelector:
-                matchLabels:
-                  app.kubernetes.io/name: envoy
+      # Run one Envoy pod on every node (DaemonSet) so each VPS's public IP has a
+      # local data-plane instance. Combined with externalTrafficPolicy: Local
+      # below, traffic hitting a VPS public IP is served by that same VPS's Envoy
+      # with no extra hop and the client source IP preserved.
+      envoyDaemonSet:
         container:
           resources:
             requests:
@@ -28,6 +22,10 @@ spec:
               memory: 640Mi
             limits:
               memory: 1Gi
-      # Expose the proxy through a cloud LoadBalancer.
+      # type: LoadBalancer is required for the Gateway's spec.addresses (the VPS
+      # public IPs) to be surfaced as the Service's externalIPs; Cilium then
+      # DNATs <public IP>:443 to the local Envoy. externalTrafficPolicy: Local
+      # keeps traffic node-local and preserves the client IP (also the default).
       envoyService:
         type: LoadBalancer
+        externalTrafficPolicy: Local
