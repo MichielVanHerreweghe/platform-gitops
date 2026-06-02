@@ -6,4 +6,6 @@ resources:
   - core/external-secrets/application.yaml
   - core/cert-manager/application.yaml
   - core/netbird/application.yaml
+  - core/cilium/application.yaml
+  - core/envoy-gateway/application.yaml
   - core/argocd/application.yaml

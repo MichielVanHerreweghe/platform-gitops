@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: envoy-gateway
+  namespace: argocd
+  labels:
+    app: envoy-gateway
+    project: core
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: envoy-gateway-system
+  project: core
+  sources:
+    - chart: gateway-helm
+      repoURL: "oci://docker.io/envoyproxy"
+      targetRevision: v1.8.0
+      helm:
+        valueFiles:
+          - $values/src/core/envoy-gateway/values.yaml
+    - repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
+      path: src/core/envoy-gateway/manifests
+      targetRevision: HEAD
+    - repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
+      targetRevision: HEAD
+      ref: values
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+      - CreateNamespace=true
+      - PruneLast=true

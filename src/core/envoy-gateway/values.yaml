@@ -1,0 +1,30 @@
+# Envoy Gateway control plane (gateway-helm chart).
+# https://gateway.envoyproxy.io/docs/install/gateway-helm-api/
+deployment:
+  # Run the control plane highly available across nodes.
+  replicas: 2
+  pod:
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            control-plane: envoy-gateway
+  envoyGateway:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1024Mi
+
+# Keep at least one control-plane replica available during voluntary disruptions.
+podDisruptionBudget:
+  minAvailable: 1
+
+config:
+  envoyGateway:
+    logging:
+      level:
+        default: info
