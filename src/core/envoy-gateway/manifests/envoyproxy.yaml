@@ -1,0 +1,33 @@
+# Data-plane (Envoy proxy) infrastructure config, referenced by the GatewayClass
+# via parametersRef. Create this before the GatewayClass to avoid disruption.
+# https://gateway.envoyproxy.io/docs/tasks/operations/customize-envoyproxy/
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: envoy-proxy-config
+  namespace: envoy-gateway-system
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDeployment:
+        # Run the data plane highly available.
+        replicas: 2
+        pod:
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: ScheduleAnyway
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: envoy
+        container:
+          resources:
+            requests:
+              cpu: 150m
+              memory: 640Mi
+            limits:
+              memory: 1Gi
+      # Expose the proxy through a cloud LoadBalancer.
+      envoyService:
+        type: LoadBalancer
