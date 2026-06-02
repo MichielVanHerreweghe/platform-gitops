@@ -2,7 +2,7 @@
 # Envoy Gateway proxy Service). With no serviceSelector the pool serves all
 # LoadBalancer Services in the cluster.
 # https://docs.cilium.io/en/stable/network/lb-ipam/
-apiVersion: cilium.io/v2
+apiVersion: cilium.io/v2alpha1
 kind: CiliumLoadBalancerIPPool
 metadata:
   name: default-pool
