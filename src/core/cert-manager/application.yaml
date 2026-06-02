@@ -18,6 +18,9 @@ spec:
         valueFiles:
           - $values/src/core/cert-manager/values.yaml
     - repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
+      path: src/core/cert-manager/manifests
+      targetRevision: HEAD
+    - repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
       targetRevision: HEAD
       ref: values
   syncPolicy:

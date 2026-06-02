@@ -1,0 +1,42 @@
+# ACME ClusterIssuers using Let's Encrypt with a Cloudflare DNS-01 solver.
+# DNS-01 is required to issue wildcard certificates (*.codeforge.be etc.).
+# The single Cloudflare API token (cloudflare-api-token Secret, created by the
+# ExternalSecret in this directory) must have Zone:DNS:Edit + Zone:Zone:Read
+# on every zone served here; cert-manager resolves the correct zone per domain.
+#
+# Start by annotating resources with letsencrypt-staging to validate the
+# DNS-01 plumbing without burning prod rate limits, then switch to
+# letsencrypt-prod for browser-trusted certs.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: michiel.vanherreweghe@outlook.com
+    privateKeySecretRef:
+      name: letsencrypt-staging-account-key
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: michiel.vanherreweghe@outlook.com
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token
