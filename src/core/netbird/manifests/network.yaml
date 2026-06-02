@@ -20,7 +20,26 @@ spec:
   dnsZoneRef:
     name: k8s.internal
   workloadOverride:
-    replicas: 1
+    # Two routing peers so a self-heal restart of one (see livenessProbe below)
+    # never drops connectivity -- the other keeps advertising the route.
+    replicas: 2
+    # The operator gives the routing peer only a startup + readiness probe, so a
+    # peer that gets deregistered server-side (ephemeral peers are removed after
+    # ~10 min offline) sits at 0/1 forever: the entrypoint runs `netbird up`
+    # (which consumes NB_SETUP_KEY) only once at container start, while the
+    # background daemon's reconnect loop has no setup key. A liveness probe forces
+    # a container restart when the peer is no longer connected, which re-runs the
+    # entrypoint and re-enrolls automatically -- no manual pod restart needed.
+    podTemplate:
+      spec:
+        containers:
+          - name: netbird
+            livenessProbe:
+              exec:
+                command: ["netbird", "status", "--check", "ready"]
+              periodSeconds: 30
+              failureThreshold: 6 # ~3 min not-ready before restart (tolerates transient relay blips)
+              timeoutSeconds: 5
 ---
 # Exposes the kube-vip HA API VIP (a real host IP, not a ClusterIP) through the
 # routing peer. We target the VIP instead of the kubernetes Service ClusterIP
