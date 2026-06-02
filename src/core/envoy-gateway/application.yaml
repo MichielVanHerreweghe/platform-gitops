@@ -13,7 +13,7 @@ spec:
   project: core
   sources:
     - chart: gateway-helm
-      repoURL: "oci://docker.io/envoyproxy"
+      repoURL: "oci://docker.io/envoyproxy/gateway-helm"
       targetRevision: v1.8.0
       helm:
         valueFiles:
