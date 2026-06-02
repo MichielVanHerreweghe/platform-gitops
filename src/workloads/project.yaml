@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: workloads
+  namespace: argocd
+spec:
+  description: An ArgoCD project for application workloads running on the cluster.
+  sourceRepos:
+    - "*"
+  destinations:
+    - namespace: "*"
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"

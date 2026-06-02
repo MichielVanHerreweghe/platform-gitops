@@ -1,0 +1,44 @@
+# Tiny echo server (traefik/whoami) used to prove the public traffic path to the
+# eg Gateway. Its response includes the request headers and the client IP it
+# saw, which also confirms externalTrafficPolicy: Local preserves the source IP.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoami
+  namespace: whoami
+  labels:
+    app: whoami
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: whoami
+  template:
+    metadata:
+      labels:
+        app: whoami
+    spec:
+      containers:
+        - name: whoami
+          image: traefik/whoami:v1.10.4
+          args:
+            - --port=8080
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault

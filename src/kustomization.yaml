@@ -10,3 +10,5 @@ resources:
   - core/cilium/application.yaml
   - core/envoy-gateway/application.yaml
   - core/argocd/application.yaml
+  - workloads/project.yaml
+  - workloads/whoami/application.yaml
