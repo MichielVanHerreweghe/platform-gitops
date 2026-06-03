@@ -22,14 +22,14 @@ sources:
 
 # Only manage records inside zones we own; never touch anything else.
 domainFilters:
-  - codeforging.nl
+  - nomaddigital.dev
 
 # sync = create, update AND delete records (full lifecycle management).
 # Records are tagged with a TXT registry entry owned by this id so external-dns
 # only ever mutates records it created.
 policy: sync
 registry: txt
-txtOwnerId: codeforging
+txtOwnerId: mvh
 # Prefix the ownership TXT records so they never collide with the managed
 # record's name (a TXT and CNAME at the same name cannot coexist; the
 # gateway-httproute source emits CNAMEs when the gateway address is a hostname).
