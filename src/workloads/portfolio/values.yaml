@@ -27,7 +27,7 @@ ciliumNetworkPolicy:
       endpointSelector:
         matchLabels:
           k8s:io.kubernetes.pod.namespace: envoy-gateway-system
-          io.cilium.gateway/owning-gateway: eg
+          gateway.envoyproxy.io/owning-gateway-name: eg
 
 autoscaling:
   enabled: false
