@@ -9,10 +9,9 @@ gateway:
   parentRefs:
     - name: eg
       namespace: envoy-gateway-system
-      sectionName: https-codeforging
+      sectionName: https-nomaddigital
   hostnames:
-    - codeforging.nl
-    - www.codeforging.nl
+    - nomaddigital.dev
   rules:
     - matches:
         - path:

@@ -42,22 +42,10 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
-    - name: https-codeforging
+    - name: https-nomaddigital
       protocol: HTTPS
       port: 443
-      hostname: "codeforging.nl"
-      allowedRoutes:
-        namespaces:
-          from: All
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - kind: Secret
-            name: eg-tls
-    - name: https-codeforging-www
-      protocol: HTTPS
-      port: 443
-      hostname: "www.codeforging.nl"
+      hostname: "nomaddigital.dev"
       allowedRoutes:
         namespaces:
           from: All
