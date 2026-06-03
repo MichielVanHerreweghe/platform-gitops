@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: portfolio
+  namespace: argocd
+spec:
+  description: An ArgoCD project for the portfolio workload.
+  sourceRepos:
+    - "*"
+  destinations:
+    - namespace: "portfolio"
+      server: https://kubernetes.default.svc
+    - namespace: "argocd"
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"

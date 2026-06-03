@@ -1,0 +1,37 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/michielvanherreweghe/portfolio-frontend
+  tag: "1.0.0"
+
+gateway:
+  enabled: true
+  parentRefs:
+    - name: eg
+      namespace: envoy-gateway-system
+      sectionName: https-codeforging
+  hostnames:
+    - codeforging.nl
+    - www.codeforging.nl
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+ciliumNetworkPolicy:
+  enabled: true
+  ingress:
+    fromGateway:
+      enabled: true
+      endpointSelector:
+        matchLabels:
+          k8s:io.kubernetes.pod.namespace: envoy-gateway-system
+          io.cilium.gateway/owning-gateway: eg
+
+autoscaling:
+  enabled: false
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1

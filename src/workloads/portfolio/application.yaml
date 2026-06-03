@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: portfolio
+  namespace: argocd
+  labels:
+    app: portfolio
+    project: portfolio
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: portfolio
+  project: portfolio
+  sources:
+    - repoURL: ghcr.io/michielvanherreweghe/charts
+      chart: portfolio
+      targetRevision: 1.0.0
+      helm:
+        valueFiles:
+          - $values/src/workloads/portfolio/values.yaml
+    - repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
+      targetRevision: HEAD
+      ref: values
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+      - CreateNamespace=true
+      - PruneLast=true

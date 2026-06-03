@@ -1,0 +1,19 @@
+# Shared HTTP->HTTPS redirect. Attaches only to the Gateway's :80 (http)
+# listener and 301s every request to its HTTPS equivalent, preserving host and
+# path. Any workload served over HTTPS gets the redirect for free; no per-app
+# route is needed.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: http-to-https-redirect
+  namespace: envoy-gateway-system
+spec:
+  parentRefs:
+    - name: eg
+      sectionName: http
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
