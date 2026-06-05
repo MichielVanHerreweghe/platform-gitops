@@ -3,7 +3,7 @@ frontend:
 
   image:
     repository: ghcr.io/michielvanherreweghe/portfolio-frontend
-    tag: "2.1.0"
+    tag: "2.1.1"
 
   gateway:
     enabled: true
@@ -100,3 +100,11 @@ cache:
   enabled: true
   name: portfolio-cache
   replicas: 2
+  args:
+    - "--proactor_threads=2"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
