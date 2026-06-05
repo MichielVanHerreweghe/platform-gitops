@@ -3,7 +3,7 @@ frontend:
 
   image:
     repository: ghcr.io/michielvanherreweghe/portfolio-frontend
-    tag: "2.1.1"
+    tag: "2.1.2"
 
   gateway:
     enabled: true
