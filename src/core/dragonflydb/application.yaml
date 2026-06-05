@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dragonflydb
+  namespace: argocd
+  labels:
+    app: dragonflydb
+    project: core
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dragonfly-operator-system
+  project: core
+  sources:
+    - chart: dragonfly-operator
+      repoURL: "oci://ghcr.io/dragonflydb/dragonfly-operator/helm/dragonfly-operator"
+      targetRevision: v1.5.0
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+      - CreateNamespace=true
+      - PruneLast=true
