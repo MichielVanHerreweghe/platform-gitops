@@ -1,36 +1,102 @@
-replicaCount: 2
+frontend:
+  replicaCount: 2
 
-image:
-  repository: ghcr.io/michielvanherreweghe/portfolio-frontend
-  tag: "1.1.0"
+  image:
+    repository: ghcr.io/michielvanherreweghe/portfolio-frontend
+    tag: "2.1.0"
 
-gateway:
+  gateway:
+    enabled: true
+    parentRefs:
+      - name: eg
+        namespace: envoy-gateway-system
+        sectionName: https-nomaddigital
+    hostnames:
+      - nomaddigital.dev
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+
+  ciliumNetworkPolicy:
+    enabled: true
+    ingress:
+      fromGateway:
+        enabled: true
+        endpointSelector:
+          matchLabels:
+            k8s:io.kubernetes.pod.namespace: envoy-gateway-system
+            gateway.envoyproxy.io/owning-gateway-name: eg
+    egress:
+      allowDNS: true
+      extra:
+        - toEndpoints:
+            - matchLabels:
+                app.kubernetes.io/name: portfolio
+                app.kubernetes.io/instance: portfolio
+                app.kubernetes.io/component: backend
+          toPorts:
+            - ports:
+                - port: "8080"
+                  protocol: TCP
+
+  autoscaling:
+    enabled: false
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+backend:
   enabled: true
-  parentRefs:
-    - name: eg
-      namespace: envoy-gateway-system
-      sectionName: https-nomaddigital
-  hostnames:
-    - nomaddigital.dev
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
 
-ciliumNetworkPolicy:
+  image:
+    repository: ghcr.io/michielvanherreweghe/portfolio-backend
+    tag: "1.0.0"
+
+  gateway:
+    enabled: false
+
+  ciliumNetworkPolicy:
+    ingress:
+      fromGateway:
+        enabled: false
+      fromFrontend:
+        enabled: true
+    egress:
+      toWorldPorts:
+        - port: "443"
+          protocol: TCP
+        - port: "465"
+          protocol: TCP
+
+  config:
+    MailService__Host: mail.spacemail.com
+    MailService__Port: "465"
+    MailService__Username: info@nomaddigital.dev
+    MailService__FromName: portfolio
+    MailService__FromEmailAddress: info@nomaddigital.dev
+    MailService__ToName: Michiel Van Herreweghe
+    MailService__ToEmailAddress: michiel@nomaddigital.dev
+    MailService__UseSsl: "true"
+    HardcoverService__BaseUrl: https://api.hardcover.app/v1/graphql
+    Cache__InstanceName: "portfolio:"
+
+  externalSecret:
+    enabled: true
+    secretStoreRef:
+      name: infisical-secret-store
+      kind: ClusterSecretStore
+    data:
+      - secretKey: MailService__Password
+        remoteRef:
+          key: app-portfolio-mail-password
+      - secretKey: HardcoverService__ApiToken
+        remoteRef:
+          key: app-portfolio-hardcover-api-token
+
+cache:
   enabled: true
-  ingress:
-    fromGateway:
-      enabled: true
-      endpointSelector:
-        matchLabels:
-          k8s:io.kubernetes.pod.namespace: envoy-gateway-system
-          gateway.envoyproxy.io/owning-gateway-name: eg
-
-autoscaling:
-  enabled: false
-
-podDisruptionBudget:
-  enabled: true
-  minAvailable: 1
+  name: portfolio-cache
+  replicas: 2
