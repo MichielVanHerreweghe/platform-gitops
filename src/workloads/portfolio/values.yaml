@@ -5,6 +5,13 @@ frontend:
     repository: ghcr.io/michielvanherreweghe/portfolio-frontend
     tag: "2.1.2"
 
+  # The frontend nginx proxies /api at request time via `resolver`, which does
+  # NOT apply resolv.conf search domains — so the chart's auto-derived bare
+  # `portfolio-backend` upstream NXDOMAINs. Pin the in-cluster FQDN instead.
+  # (Namespace-specific: this release runs in the `portfolio` namespace.)
+  apiProxy:
+    upstream: portfolio-backend.portfolio.svc.cluster.local:80
+
   gateway:
     enabled: true
     parentRefs:
