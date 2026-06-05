@@ -86,7 +86,7 @@ backend:
   externalSecret:
     enabled: true
     secretStoreRef:
-      name: infisical-secret-store
+      name: infisical-app-portfolio
       kind: ClusterSecretStore
     data:
       - secretKey: MailService__Password

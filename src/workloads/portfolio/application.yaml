@@ -21,6 +21,9 @@ spec:
     - repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
       targetRevision: HEAD
       ref: values
+    - repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
+      targetRevision: HEAD
+      path: src/workloads/portfolio/manifests
   syncPolicy:
     automated:
       allowEmpty: true
