@@ -74,6 +74,12 @@ backend:
           protocol: TCP
         - port: "465"
           protocol: TCP
+        # OCSP/CRL certificate-revocation checks over HTTP. MailKit validates the
+        # SMTP server's TLS cert with CheckCertificateRevocation=true by default,
+        # which fetches http://ocsp.sectigo.com (port 80). Without this the SYN is
+        # dropped, the revocation check hangs, and the contact-form send times out.
+        - port: "80"
+          protocol: TCP
 
   config:
     MailService__Host: mail.spacemail.com
