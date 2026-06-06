@@ -36,17 +36,14 @@ frontend:
             k8s:io.kubernetes.pod.namespace: envoy-gateway-system
             gateway.envoyproxy.io/owning-gateway-name: eg
     egress:
+      # DNS to kube-dns so nginx can resolve the backend at request time.
       allowDNS: true
-      extra:
-        - toEndpoints:
-            - matchLabels:
-                app.kubernetes.io/name: portfolio
-                app.kubernetes.io/instance: portfolio
-                app.kubernetes.io/component: backend
-          toPorts:
-            - ports:
-                - port: "8080"
-                  protocol: TCP
+      # Reverse-proxy /api/* to the in-cluster backend Pods. Renders the backend
+      # selector from the chart helper (same labels the backend Pods get), so it
+      # can't drift from the release name. Port is the backend container port.
+      toBackend:
+        enabled: true
+        port: "8080"
 
   autoscaling:
     enabled: false
