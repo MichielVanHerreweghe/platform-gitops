@@ -3,7 +3,7 @@ frontend:
 
   image:
     repository: ghcr.io/michielvanherreweghe/portfolio-frontend
-    tag: "2.1.2"
+    tag: "2.1.3"
 
   # The frontend nginx proxies /api at request time via `resolver`, which does
   # NOT apply resolv.conf search domains — so the chart's auto-derived bare
