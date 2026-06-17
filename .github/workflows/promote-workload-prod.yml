@@ -1,0 +1,100 @@
+name: Promote workload dev -> prod
+
+# Triggered by ArgoCD Notifications (argocd-notifications-cm) once a workload's
+# dev Application is Healthy + Synced on a new version. Copies the versions
+# running in dev into that workload's prod overlay and opens a PR. Idempotent:
+# only opens/updates a PR when dev and prod actually differ.
+#
+# The workload to promote comes from the dispatch payload (`client_payload.workload`,
+# the Application's `app` label). No workload currently has a dev overlay, so this
+# stays dormant until one is added (see docs/automated-updates.md).
+on:
+  repository_dispatch:
+    types: [workload-dev-deployed]
+  workflow_dispatch:
+    inputs:
+      workload:
+        description: Workload name under src/workloads/ to promote
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # yq (mikefarah v4) is preinstalled on ubuntu-latest runners.
+      - name: Promote dev versions into prod
+        id: promote
+        env:
+          WORKLOAD: ${{ github.event.client_payload.workload || inputs.workload }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${WORKLOAD:-}" ]; then
+            echo "No workload in the dispatch payload; nothing to promote."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          dev_values="src/workloads/$WORKLOAD/dev/values.yaml"
+          prod_values="src/workloads/$WORKLOAD/prod/values.yaml"
+          dev_app="src/workloads/$WORKLOAD/dev/application.yaml"
+          prod_app="src/workloads/$WORKLOAD/prod/application.yaml"
+
+          if [ ! -f "$dev_values" ] || [ ! -f "$dev_app" ]; then
+            echo "Dev overlay not present for '$WORKLOAD' ($dev_values / $dev_app); nothing to promote."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed=false
+
+          # Chart version (Application targetRevision). The Application uses a
+          # multi-source spec; select the source that carries the chart.
+          dev_chart=$(yq '.spec.sources[] | select(has("chart")) | .targetRevision' "$dev_app")
+          prod_chart=$(yq '.spec.sources[] | select(has("chart")) | .targetRevision' "$prod_app")
+          if [ "$dev_chart" != "$prod_chart" ]; then
+            echo "chart targetRevision: $prod_chart -> $dev_chart"
+            yq -i "(.spec.sources[] | select(has(\"chart\")) | .targetRevision) = \"$dev_chart\"" "$prod_app"
+            changed=true
+          fi
+
+          # Image tags.
+          for path in '.frontend.image.tag' '.backend.image.tag'; do
+            dev_tag=$(yq "$path" "$dev_values")
+            prod_tag=$(yq "$path" "$prod_values")
+            if [ "$dev_tag" = "null" ]; then
+              continue
+            fi
+            if [ "$dev_tag" != "$prod_tag" ]; then
+              echo "$path: $prod_tag -> $dev_tag"
+              yq -i "$path = \"$dev_tag\"" "$prod_values"
+              changed=true
+            fi
+          done
+
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
+      - name: Open promotion PR
+        if: steps.promote.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: promote/${{ github.event.client_payload.workload || inputs.workload }}-prod
+          base: main
+          commit-message: "chore: promote ${{ github.event.client_payload.workload || inputs.workload }} dev versions to prod"
+          title: "chore: promote ${{ github.event.client_payload.workload || inputs.workload }} dev versions to prod"
+          body: |
+            Automated promotion: the versions below are Healthy in the dev environment
+            of `${{ github.event.client_payload.workload || inputs.workload }}` and are
+            being promoted to prod.
+
+            Triggered by ArgoCD `on-deployed` for `${{ github.event.client_payload.application }}`
+            at revision `${{ github.event.client_payload.revision }}`.
+          labels: |
+            promotion

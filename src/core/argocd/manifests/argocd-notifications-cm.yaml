@@ -1,0 +1,50 @@
+# ArgoCD Notifications configuration.
+#
+# Health gate for the dev->prod promotion flow: when a workload's dev Application
+# (subscribed via the `on-deployed.github` annotation) reaches Healthy + Synced
+# after a sync, the controller POSTs a repository_dispatch to GitHub, which
+# triggers the .github/workflows/promote-workload-prod.yml workflow.
+#
+# Workload-agnostic: the dispatch carries the workload name (from the Application's
+# `app` label), so any workload that adds a dev overlay and the subscription
+# annotation gets promoted. No workload currently subscribes.
+#
+# The `github` webhook service authenticates with the `github-token` key from the
+# `argocd-notifications-secret` Secret (populated by
+# argocd-notifications-secret-externalsecret.yaml from Infisical).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+data:
+  service.webhook.github: |
+    url: https://api.github.com
+    headers:
+      - name: Authorization
+        value: token $github-token
+      - name: Accept
+        value: application/vnd.github+json
+
+  # Fires the GitHub repository_dispatch. The promotion workflow is idempotent
+  # (it only opens a PR when dev and prod versions differ), so an event per sync
+  # is harmless; `oncePer` on the synced revision avoids duplicate sends.
+  trigger.on-deployed: |
+    - when: app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy' and app.status.sync.status == 'Synced'
+      oncePer: app.status.sync.revision
+      send: [github-dispatch]
+
+  template.github-dispatch: |
+    webhook:
+      github:
+        method: POST
+        path: /repos/MichielVanHerreweghe/platform-gitops/dispatches
+        body: |
+          {
+            "event_type": "workload-dev-deployed",
+            "client_payload": {
+              "workload": "{{.app.metadata.labels.app}}",
+              "application": "{{.app.metadata.name}}",
+              "revision": "{{.app.status.sync.revision}}"
+            }
+          }
