@@ -1,30 +1,10 @@
+# Env-agnostic portfolio values shared by every environment.
+# Per-environment overrides (image tags, replica counts, gateway hostnames,
+# apiProxy upstream namespace, secret store) live in ../<env>/values.yaml and are
+# layered on top of this file (Helm deep-merges; the env file wins).
 frontend:
-  replicaCount: 2
-
   image:
     repository: ghcr.io/michielvanherreweghe/portfolio-frontend
-    tag: "2.2.0"
-
-  # The frontend nginx proxies /api at request time via `resolver`, which does
-  # NOT apply resolv.conf search domains — so the chart's auto-derived bare
-  # `portfolio-backend` upstream NXDOMAINs. Pin the in-cluster FQDN instead.
-  # (Namespace-specific: this release runs in the `portfolio` namespace.)
-  apiProxy:
-    upstream: portfolio-backend.portfolio.svc.cluster.local:80
-
-  gateway:
-    enabled: true
-    parentRefs:
-      - name: eg
-        namespace: envoy-gateway-system
-        sectionName: https-nomaddigital
-    hostnames:
-      - nomaddigital.dev
-    rules:
-      - matches:
-          - path:
-              type: PathPrefix
-              value: /
 
   ciliumNetworkPolicy:
     enabled: true
@@ -48,16 +28,11 @@ frontend:
   autoscaling:
     enabled: false
 
-  podDisruptionBudget:
-    enabled: true
-    minAvailable: 1
-
 backend:
   enabled: true
 
   image:
     repository: ghcr.io/michielvanherreweghe/portfolio-backend
-    tag: "1.0.0"
 
   gateway:
     enabled: false
@@ -95,9 +70,6 @@ backend:
 
   externalSecret:
     enabled: true
-    secretStoreRef:
-      name: infisical-app-portfolio
-      kind: ClusterSecretStore
     data:
       - secretKey: MailService__Password
         remoteRef:
@@ -109,7 +81,6 @@ backend:
 cache:
   enabled: true
   name: portfolio-cache
-  replicas: 2
   args:
     - "--proactor_threads=2"
   resources:

@@ -1,0 +1,44 @@
+# Production overrides for the portfolio workload. Layered on top of
+# ../base/values.yaml. Served on nomaddigital.dev in the `portfolio` namespace.
+frontend:
+  replicaCount: 2
+
+  image:
+    tag: "2.2.0"
+
+  # The frontend nginx proxies /api at request time via `resolver`, which does
+  # NOT apply resolv.conf search domains — so the chart's auto-derived bare
+  # `portfolio-backend` upstream NXDOMAINs. Pin the in-cluster FQDN instead.
+  # (Namespace-specific: this release runs in the `portfolio` namespace.)
+  apiProxy:
+    upstream: portfolio-backend.portfolio.svc.cluster.local:80
+
+  gateway:
+    enabled: true
+    parentRefs:
+      - name: eg
+        namespace: envoy-gateway-system
+        sectionName: https-nomaddigital
+    hostnames:
+      - nomaddigital.dev
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+backend:
+  image:
+    tag: "1.0.0"
+
+  externalSecret:
+    secretStoreRef:
+      name: infisical-app-portfolio
+      kind: ClusterSecretStore
+
+cache:
+  replicas: 2
