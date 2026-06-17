@@ -1,9 +1,11 @@
 api:
   image:
     repository: ghcr.io/michielvanherreweghe/finplan-backend
+    pullPolicy: IfNotPresent
 frontend:
   image:
     repository: ghcr.io/michielvanherreweghe/finplan-frontend
+    pullPolicy: IfNotPresent
 
 database:
   enabled: true

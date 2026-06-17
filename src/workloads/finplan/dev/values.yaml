@@ -7,12 +7,16 @@ httpRoute:
       sectionName: https-finplan-dev
 
 api:
+  image:
+    tag: "0.2.0"
   auth0:
     authority: "https://dev-finplan.eu.auth0.com/"
     clientId: "rsBiP4vz39fXmXKYLOvMuGS8rv2Bu2J6"
   autoscaling:
     enabled: false
 frontend:
+  image:
+    tag: "1.0.1"
   oidc:
     authority: "https://dev-finplan.eu.auth0.com/"
     clientId: "rsBiP4vz39fXmXKYLOvMuGS8rv2Bu2J6"
