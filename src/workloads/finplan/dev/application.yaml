@@ -18,7 +18,7 @@ spec:
   sources:
     - repoURL: ghcr.io/michielvanherreweghe/charts
       chart: finplan
-      targetRevision: 0.2.0
+      targetRevision: 0.2.1
       helm:
         valueFiles:
           - $values/src/workloads/finplan/base/values.yaml
