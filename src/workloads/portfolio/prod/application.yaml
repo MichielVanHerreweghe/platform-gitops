@@ -6,6 +6,7 @@ metadata:
   labels:
     app: portfolio
     project: portfolio
+    env: prod
 spec:
   destination:
     server: https://kubernetes.default.svc
@@ -17,13 +18,14 @@ spec:
       targetRevision: 2.1.1
       helm:
         valueFiles:
-          - $values/src/workloads/portfolio/values.yaml
+          - $values/src/workloads/portfolio/base/values.yaml
+          - $values/src/workloads/portfolio/prod/values.yaml
     - repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
       targetRevision: HEAD
       ref: values
     - repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
       targetRevision: HEAD
-      path: src/workloads/portfolio/manifests
+      path: src/workloads/portfolio/prod/manifests
   syncPolicy:
     automated:
       allowEmpty: true

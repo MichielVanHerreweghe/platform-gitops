@@ -12,4 +12,4 @@ resources:
   - core/argocd/application.yaml
 
   - workloads/portfolio/project.yaml
-  - workloads/portfolio/application.yaml
+  - workloads/portfolio/prod/application.yaml
