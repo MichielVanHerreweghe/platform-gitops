@@ -14,3 +14,6 @@ resources:
 
   - workloads/portfolio/project.yaml
   - workloads/portfolio/prod/application.yaml
+
+  - workloads/finplan/project.yaml
+  - workloads/finplan/dev/application.yaml

@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: finplan-dev
+  namespace: argocd
+  labels:
+    app: finplan
+    project: finplan
+    env: dev
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    notifications.argoproj.io/subscribe.on-deployed.github: ""
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: finplan-dev
+  project: finplan
+  sources:
+    - repoURL: ghcr.io/michielvanherreweghe/charts
+      chart: finplan
+      targetRevision: 0.1.0
+      helm:
+        valueFiles:
+          - $values/src/workloads/finplan/base/values.yaml
+          - $values/src/workloads/finplan/dev/values.yaml
+    - repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
+      targetRevision: HEAD
+      ref: values
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+      - CreateNamespace=true
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

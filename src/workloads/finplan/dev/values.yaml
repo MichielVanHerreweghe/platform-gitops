@@ -1,0 +1,26 @@
+httpRoute:
+  hostnames:
+    - finplan.dev.nomaddigital.dev
+  parentRefs:
+    - name: eg
+      namespace: envoy-gateway-system
+      sectionName: https-finplan-dev
+
+api:
+  auth0:
+    authority: "https://dev-finplan.eu.auth0.com/"
+    clientId: "rsBiP4vz39fXmXKYLOvMuGS8rv2Bu2J6"
+  autoscaling:
+    enabled: false
+frontend:
+  oidc:
+    authority: "https://dev-finplan.eu.auth0.com/"
+    clientId: "rsBiP4vz39fXmXKYLOvMuGS8rv2Bu2J6"
+    scope: "openid profile email"
+  autoscaling:
+    enabled: false
+
+database:
+  instances: 1
+  affinity:
+    enablePodAntiAffinity: false

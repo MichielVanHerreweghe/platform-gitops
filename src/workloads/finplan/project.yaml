@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: finplan
+  namespace: argocd
+spec:
+  description: An ArgoCD project for the FinPlan workload.
+  sourceRepos:
+    - ghcr.io/michielvanherreweghe/charts
+    - "https://github.com/MichielVanHerreweghe/platform-gitops.git"
+  destinations:
+    - namespace: finplan
+      server: https://kubernetes.default.svc
+    - namespace: finplan-dev
+      server: https://kubernetes.default.svc
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: external-secrets.io
+      kind: ClusterSecretStore
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: "*"
+    - group: apps
+      kind: "*"
+    - group: batch
+      kind: "*"
+    - group: autoscaling
+      kind: "*"
+    - group: policy
+      kind: "*"
+    - group: postgresql.cnpg.io
+      kind: "*"
+    - group: gateway.networking.k8s.io
+      kind: "*"
+    - group: cilium.io
+      kind: "*"
+    - group: external-secrets.io
+      kind: "*"

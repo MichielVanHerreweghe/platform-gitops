@@ -1,0 +1,18 @@
+api:
+  image:
+    repository: ghcr.io/michielvanherreweghe/finplan-backend
+frontend:
+  image:
+    repository: ghcr.io/michielvanherreweghe/finplan-frontend
+
+database:
+  enabled: true
+
+networkPolicy:
+  enabled: true
+  gateway:
+    namespace: envoy-gateway-system
+    podSelector:
+      gateway.envoyproxy.io/owning-gateway-name: eg
+  egressFqdns:
+    - matchPattern: "*.auth0.com"

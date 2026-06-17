@@ -30,9 +30,10 @@
   ],
   "packageRules": [
     {
-      "description": "Drop the argocd manager's broken OCI (docker) lookups; the OCI customManager above handles them with the correct image name.",
+      "description": "Drop the argocd manager's broken OCI (docker) lookups for core, where repoURL ends with the chart name and the join doubles the segment; the OCI customManager above handles those. Scoped to core: workload charts (e.g. ghcr.io/.../charts + chart: finplan) join correctly, so the argocd manager should drive their dev auto-updates.",
       "matchManagers": ["argocd"],
       "matchDatasources": ["docker"],
+      "matchFileNames": ["src/core/**/application.yaml"],
       "enabled": false
     },
     {
