@@ -17,4 +17,9 @@ networkPolicy:
     podSelector:
       gateway.envoyproxy.io/owning-gateway-name: eg
   egressFqdns:
+    # Cilium's `*` matches a single DNS label (dots excluded), so "*.auth0.com"
+    # covers US-region tenants (tenant.auth0.com) but NOT EU-region tenants
+    # (tenant.eu.auth0.com). The FinPlan tenant is EU (dev-finplan.eu.auth0.com),
+    # so the API needs this extra pattern to reach Auth0's OIDC metadata/JWKS.
     - matchPattern: "*.auth0.com"
+    - matchPattern: "*.eu.auth0.com"
