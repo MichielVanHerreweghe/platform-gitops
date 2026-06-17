@@ -1,9 +1,13 @@
 # ArgoCD Notifications configuration.
 #
-# Health gate for the dev->prod promotion flow: when an Application subscribed
-# via the `on-deployed.github` annotation reaches Healthy + Synced after a sync,
-# the controller POSTs a repository_dispatch to GitHub, which triggers the
-# .github/workflows/promote-portfolio-prod.yml workflow.
+# Health gate for the dev->prod promotion flow: when a workload's dev Application
+# (subscribed via the `on-deployed.github` annotation) reaches Healthy + Synced
+# after a sync, the controller POSTs a repository_dispatch to GitHub, which
+# triggers the .github/workflows/promote-workload-prod.yml workflow.
+#
+# Workload-agnostic: the dispatch carries the workload name (from the Application's
+# `app` label), so any workload that adds a dev overlay and the subscription
+# annotation gets promoted. No workload currently subscribes.
 #
 # The `github` webhook service authenticates with the `github-token` key from the
 # `argocd-notifications-secret` Secret (populated by
@@ -37,8 +41,9 @@ data:
         path: /repos/MichielVanHerreweghe/platform-gitops/dispatches
         body: |
           {
-            "event_type": "portfolio-dev-deployed",
+            "event_type": "workload-dev-deployed",
             "client_payload": {
+              "workload": "{{.app.metadata.labels.app}}",
               "application": "{{.app.metadata.name}}",
               "revision": "{{.app.status.sync.revision}}"
             }

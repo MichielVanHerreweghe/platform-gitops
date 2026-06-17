@@ -10,18 +10,24 @@ This repo keeps workloads up to date automatically, with two policies.
 
 ## Application workloads (`src/workloads/**`)
 
-Per-environment overlays (`dev/`, `prod/`) layered on a shared `base/`. The update flow:
+> **Status: dormant.** No application workload currently defines a `dev` overlay, so none is
+> auto-updated, and Renovate is configured to leave `prod/` alone. The machinery below activates per
+> workload as soon as that workload adds a `dev/` overlay following the convention at the end of this
+> doc. `portfolio` (the only workload today) stays manually versioned.
+
+The intended flow for a workload that has both `dev/` and `prod/` overlays (layered on a shared
+`base/`):
 
 1. **Renovate auto-updates `dev`.** New chart versions (`dev/application.yaml`) and container image
    tags (`dev/values.yaml`) are merged to `main` automatically.
-2. **ArgoCD deploys dev and reports health.** When the `*-dev` Application reaches `Healthy` +
+2. **ArgoCD deploys dev and reports health.** When the workload's dev Application reaches `Healthy` +
    `Synced` on the new version, ArgoCD Notifications (`argocd-notifications-cm`) fires a GitHub
-   `repository_dispatch` (`portfolio-dev-deployed`).
+   `repository_dispatch` (`workload-dev-deployed`) carrying the workload name.
 3. **Promotion PR for prod.** That dispatch triggers
-   [`promote-portfolio-prod.yml`](../.github/workflows/promote-portfolio-prod.yml), which copies the
-   dev chart version + image tags into `prod/` and opens a PR. It only opens/updates a PR when dev
-   and prod actually differ, so repeated dispatches are harmless. Renovate ignores `prod/` entirely —
-   this workflow is the sole owner of prod version bumps.
+   [`promote-workload-prod.yml`](../.github/workflows/promote-workload-prod.yml), which copies the
+   dev chart version + image tags into that workload's `prod/` and opens a PR. It only opens/updates a
+   PR when dev and prod actually differ, so repeated dispatches are harmless. Renovate ignores `prod/`
+   entirely — this workflow is the sole owner of prod version bumps.
 
 ## Components
 
@@ -30,28 +36,30 @@ Per-environment overlays (`dev/`, `prod/`) layered on a shared `base/`. The upda
   health gate: `on-deployed` trigger + GitHub webhook service.
 - [`argocd-notifications-secret-externalsecret.yaml`](../src/core/argocd/manifests/argocd-notifications-secret-externalsecret.yaml)
   — GitHub token (from Infisical) for the webhook.
-- [`promote-portfolio-prod.yml`](../.github/workflows/promote-portfolio-prod.yml) — the promotion PR.
+- [`promote-workload-prod.yml`](../.github/workflows/promote-workload-prod.yml) — the promotion PR.
 
 ## One-time setup
 
 - Enable the **Mend Renovate GitHub App** on this repo and merge its onboarding PR.
-- Add the Infisical secret `argocd-github-dispatch-token` (prod / `/cluster`): a GitHub PAT allowed
-  to create repository_dispatch events on this repo (fine-grained: `Contents: Read and write`; or a
-  classic PAT with the `repo` scope).
+- The promotion flow only needs the GitHub token once a workload actually adds a dev overlay: add the
+  Infisical secret `argocd-github-dispatch-token` (prod / `/cluster`) — a GitHub PAT allowed to create
+  repository_dispatch events on this repo (fine-grained: `Contents: Read and write`; or a classic PAT
+  with the `repo` scope).
 
-## Dev-overlay convention (required for the promotion flow)
+## Dev-overlay convention (required to activate the promotion flow for a workload)
 
-The automation above is wired but **dormant until a `dev/` overlay exists** for the workload.
-Create one mirroring `prod/`. For `portfolio`:
+The application-workload flow is **dormant until a `dev/` overlay exists** for that workload. Create
+one mirroring `prod/`. For a workload named `<workload>`:
 
-### `src/workloads/portfolio/dev/application.yaml`
+### `src/workloads/<workload>/dev/application.yaml`
 
-Same multi-source shape as `prod/application.yaml`, but:
+Same multi-source shape as the prod Application, but:
 
+- `metadata.labels.app: <workload>` (the promotion workflow reads this from the dispatch payload)
 - `metadata.labels.env: dev`
-- `spec.destination.namespace: portfolio-dev`
+- `spec.destination.namespace: <workload>-dev` (and add that namespace to the workload's `project.yaml`)
 - value files: `base/values.yaml` + `dev/values.yaml`
-- manifests path: `src/workloads/portfolio/dev/manifests`
+- manifests path: `src/workloads/<workload>/dev/manifests`
 - **subscribe to the health gate** via annotation:
   ```yaml
   metadata:
@@ -59,7 +67,7 @@ Same multi-source shape as `prod/application.yaml`, but:
       notifications.argoproj.io/subscribe.on-deployed.github: ""
   ```
 
-### `src/workloads/portfolio/dev/values.yaml`
+### `src/workloads/<workload>/dev/values.yaml`
 
 Dev-specific overrides (hostname, replicas, etc.) plus the image tags. **Each tag must carry a
 Renovate annotation comment** so the custom manager (which can't link the split repo/tag) tracks it:
@@ -67,16 +75,14 @@ Renovate annotation comment** so the custom manager (which can't link the split 
 ```yaml
 frontend:
   image:
-    # renovate: datasource=docker depName=ghcr.io/michielvanherreweghe/portfolio-frontend
-    tag: "2.2.0"
+    # renovate: datasource=docker depName=ghcr.io/<owner>/<workload>-frontend
+    tag: "1.0.0"
 backend:
   image:
-    # renovate: datasource=docker depName=ghcr.io/michielvanherreweghe/portfolio-backend
+    # renovate: datasource=docker depName=ghcr.io/<owner>/<workload>-backend
     tag: "1.0.0"
 ```
 
 ### Register it
 
-Add `workloads/portfolio/dev/application.yaml` to [`src/kustomization.yaml`](../src/kustomization.yaml).
-The `portfolio-dev` namespace is already allowed in
-[`project.yaml`](../src/workloads/portfolio/project.yaml).
+Add `workloads/<workload>/dev/application.yaml` to [`src/kustomization.yaml`](../src/kustomization.yaml).
