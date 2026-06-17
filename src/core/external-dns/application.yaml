@@ -14,7 +14,7 @@ spec:
   sources:
     - chart: external-dns
       repoURL: https://kubernetes-sigs.github.io/external-dns/
-      targetRevision: 1.16.1
+      targetRevision: 1.21.1
       helm:
         valueFiles:
           - $values/src/core/external-dns/values.yaml
