@@ -6,7 +6,6 @@
     ":semanticCommitTypeAll(chore)"
   ],
   "timezone": "Europe/Brussels",
-  "schedule": ["before 6am on monday"],
   "prConcurrentLimit": 10,
   "argocd": {
     "managerFilePatterns": ["/src/.*/application\\.yaml$/"]
