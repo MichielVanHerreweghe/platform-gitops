@@ -1,0 +1,48 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommitTypeAll(chore)"
+  ],
+  "timezone": "Europe/Brussels",
+  "schedule": ["before 6am on monday"],
+  "prConcurrentLimit": 10,
+  "argocd": {
+    "managerFilePatterns": ["/src/.*/application\\.yaml$/"]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/src/workloads/.*/dev/values\\.yaml$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+tag:\\s*\"(?<currentValue>[^\"]+)\""
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Core platform charts: open a PR for review, never auto-merge.",
+      "matchFileNames": ["src/core/**/application.yaml"],
+      "groupName": "core charts",
+      "automerge": false
+    },
+    {
+      "description": "Application workloads (dev): auto-update so new versions deploy to dev automatically.",
+      "matchFileNames": [
+        "src/workloads/**/dev/application.yaml",
+        "src/workloads/**/dev/values.yaml"
+      ],
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "description": "Application workloads (prod): owned by the dev->prod promotion workflow, not Renovate.",
+      "matchFileNames": [
+        "src/workloads/**/prod/application.yaml",
+        "src/workloads/**/prod/values.yaml"
+      ],
+      "enabled": false
+    }
+  ]
+}

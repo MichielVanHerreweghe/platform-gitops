@@ -1,0 +1,83 @@
+name: Promote portfolio dev -> prod
+
+# Triggered by ArgoCD Notifications (argocd-notifications-cm) once the
+# portfolio-dev Application is Healthy + Synced on a new version. Copies the
+# versions running in dev into the prod overlay and opens a PR. Idempotent:
+# only opens/updates a PR when dev and prod actually differ.
+on:
+  repository_dispatch:
+    types: [portfolio-dev-deployed]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    env:
+      DEV_VALUES: src/workloads/portfolio/dev/values.yaml
+      PROD_VALUES: src/workloads/portfolio/prod/values.yaml
+      DEV_APP: src/workloads/portfolio/dev/application.yaml
+      PROD_APP: src/workloads/portfolio/prod/application.yaml
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Promote dev versions into prod
+        id: promote
+        run: |
+          set -euo pipefail
+
+          if [ ! -f "$DEV_VALUES" ] || [ ! -f "$DEV_APP" ]; then
+            echo "Dev overlay not present yet ($DEV_VALUES / $DEV_APP); nothing to promote."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed=false
+
+          # Chart version (Application targetRevision). The portfolio Application
+          # uses a multi-source spec; select the source that carries the chart.
+          dev_chart=$(yq '.spec.sources[] | select(has("chart")) | .targetRevision' "$DEV_APP")
+          prod_chart=$(yq '.spec.sources[] | select(has("chart")) | .targetRevision' "$PROD_APP")
+          if [ "$dev_chart" != "$prod_chart" ]; then
+            echo "chart targetRevision: $prod_chart -> $dev_chart"
+            yq -i "(.spec.sources[] | select(has(\"chart\")) | .targetRevision) = \"$dev_chart\"" "$PROD_APP"
+            changed=true
+          fi
+
+          # Image tags.
+          for path in '.frontend.image.tag' '.backend.image.tag'; do
+            dev_tag=$(yq "$path" "$DEV_VALUES")
+            prod_tag=$(yq "$path" "$PROD_VALUES")
+            if [ "$dev_tag" = "null" ]; then
+              continue
+            fi
+            if [ "$dev_tag" != "$prod_tag" ]; then
+              echo "$path: $prod_tag -> $dev_tag"
+              yq -i "$path = \"$dev_tag\"" "$PROD_VALUES"
+              changed=true
+            fi
+          done
+
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
+      - name: Open promotion PR
+        if: steps.promote.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: promote/portfolio-prod
+          base: main
+          commit-message: "chore: promote portfolio dev versions to prod"
+          title: "chore: promote portfolio dev versions to prod"
+          body: |
+            Automated promotion: the versions below are Healthy in `portfolio-dev`
+            and are being promoted to prod.
+
+            Triggered by ArgoCD `on-deployed` for `${{ github.event.client_payload.application }}`
+            at revision `${{ github.event.client_payload.revision }}`.
+          labels: |
+            promotion
+            portfolio
