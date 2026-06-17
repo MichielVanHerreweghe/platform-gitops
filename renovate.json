@@ -18,9 +18,24 @@
       "matchStrings": [
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+tag:\\s*\"(?<currentValue>[^\"]+)\""
       ]
+    },
+    {
+      "description": "OCI Helm charts in ArgoCD Applications. The built-in argocd manager joins repoURL+chart, which doubles the chart segment for these (repoURL already ends with the chart name), so we read the image straight from the oci:// repoURL instead.",
+      "customType": "regex",
+      "managerFilePatterns": ["/src/core/.*/application\\.yaml$/"],
+      "matchStrings": [
+        "repoURL:\\s*\"?oci://(?<depName>[^\"\\s]+)\"?\\s+targetRevision:\\s*(?<currentValue>\\S+)"
+      ],
+      "datasourceTemplate": "docker"
     }
   ],
   "packageRules": [
+    {
+      "description": "Drop the argocd manager's broken OCI (docker) lookups; the OCI customManager above handles them with the correct image name.",
+      "matchManagers": ["argocd"],
+      "matchDatasources": ["docker"],
+      "enabled": false
+    },
     {
       "description": "Core platform charts: open a PR for review, never auto-merge.",
       "matchFileNames": ["src/core/**/application.yaml"],
