@@ -9,6 +9,7 @@ resources:
   - core/netbird/application.yaml
   - core/envoy-gateway/application.yaml
   - core/dragonflydb/application.yaml
+  - core/cloudnative-pg/application.yaml
   - core/argocd/application.yaml
 
   - workloads/portfolio/project.yaml

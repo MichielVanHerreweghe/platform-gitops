@@ -1,0 +1,56 @@
+# CloudNativePG operator (chart 0.28.3 / operator v1.29.1).
+# The operator runs cluster-wide; individual PostgreSQL `Cluster` resources are
+# defined by the workloads that need them, not here in core.
+
+# Let the chart manage the operator CRDs (Cluster, Backup, ScheduledBackup,
+# Pooler, ...). Combined with ServerSideApply in the Application this keeps the
+# large CRDs in sync.
+crds:
+  create: true
+
+config:
+  create: true
+  # Watch every namespace so workloads can declare their own Clusters.
+  clusterWide: true
+
+# Resource requests sized for the operator control plane. A CPU limit is left
+# unset on purpose to avoid throttling reconciliation under load (memory is
+# capped to give the OOM killer a predictable ceiling).
+resources:
+  requests:
+    cpu: 100m
+    memory: 100Mi
+  limits:
+    memory: 200Mi
+
+# Spread the (potentially multiple) operator replicas across nodes. Harmless at
+# replicaCount: 1 and ready if you scale up for HA.
+replicaCount: 1
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: cloudnative-pg
+
+# Hardened pod/container security context (chart defaults are already
+# non-root + read-only rootfs; pinned here so they can't silently regress).
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# Observability. Enable these once a Prometheus Operator (which provides the
+# PodMonitor CRD) is installed in the cluster — turning them on without it will
+# make the Application fail to sync.
+monitoring:
+  podMonitorEnabled: false
+  grafanaDashboard:
+    create: false
