@@ -14,7 +14,7 @@ spec:
   sources:
     - chart: dragonfly-operator
       repoURL: "oci://ghcr.io/dragonflydb/dragonfly-operator/helm/dragonfly-operator"
-      targetRevision: v1.5.0
+      targetRevision: v1.6.1
   syncPolicy:
     automated:
       allowEmpty: true
