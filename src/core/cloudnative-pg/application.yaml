@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cloudnative-pg
+  namespace: argocd
+  labels:
+    app: cloudnative-pg
+    project: core
+spec:
+  destination:
+    namespace: cnpg-system
+    server: https://kubernetes.default.svc
+  project: core
+  sources:
+    - chart: cloudnative-pg
+      repoURL: https://cloudnative-pg.github.io/charts
+      targetRevision: 0.28.3
+      helm:
+        valueFiles:
+          - $values/src/core/cloudnative-pg/values.yaml
+    - repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
+      targetRevision: HEAD
+      ref: values
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+      # CNPG CRDs are large; ServerSideApply avoids the client-side
+      # last-applied-configuration annotation size limit.
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+      - CreateNamespace=true
+      - PruneLast=true
