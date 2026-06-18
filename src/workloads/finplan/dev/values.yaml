@@ -8,7 +8,7 @@ httpRoute:
 
 api:
   image:
-    tag: "0.2.0"
+    tag: "0.2.1"
   auth0:
     authority: "https://dev-finplan.eu.auth0.com/"
     clientId: "rsBiP4vz39fXmXKYLOvMuGS8rv2Bu2J6"
