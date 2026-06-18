@@ -83,7 +83,7 @@ jobs:
 
       - name: Open promotion PR
         if: steps.promote.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           branch: promote/${{ github.event.client_payload.workload || inputs.workload }}-prod
           base: main
