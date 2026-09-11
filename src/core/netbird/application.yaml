@@ -14,7 +14,7 @@ spec:
   sources:
     - chart: netbird-operator
       repoURL: "oci://ghcr.io/netbirdio/helm-charts/netbird-operator"
-      targetRevision: 0.7.0
+      targetRevision: 0.8.0
     - repoURL: "https://github.com/MichielVanHerreweghe/platform-gitops.git"
       path: src/core/netbird/manifests
       targetRevision: HEAD
